@@ -1,0 +1,8 @@
+# Track 2 (agent-core) and Track 3 (receipts) have zero runtime dependencies.
+
+# Tests:
+pytest>=7
+
+# Track 1 (voice pipeline) will add when it lands:
+#   assemblyai
+#   elevenlabs

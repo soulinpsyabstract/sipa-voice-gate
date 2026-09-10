@@ -32,13 +32,30 @@ Not a bigger model — a stricter loop around it.
 
 ## Repo structure
 
-| Dir | Track | Owner |
-| --- | --- | --- |
-| [`pipeline/`](pipeline/) | Voice pipeline — STT + PII redaction + TTS | — |
-| [`agent-core/`](agent-core/) | Intent + consequence-gate + confirm-before-act loop | Aelin (gate design) |
-| [`receipts/`](receipts/) | Append-only hashed action log + verifier | — |
-| [`demo/`](demo/) | Web UI (transcript · gate decision · receipt tape) + submission | — |
-| [`docs/`](docs/) | Build plan, timeline, checklist | — |
+| Dir | Track | Owner | Status |
+| --- | --- | --- | --- |
+| [`sipa_voice_gate/`](sipa_voice_gate/) | The core package (tracks 2 + 3) | Aelin | **built, 21 tests** |
+| [`pipeline/`](pipeline/) | Voice pipeline — STT + PII redaction + TTS | — | to build |
+| [`agent-core/`](agent-core/) | Intent + consequence-gate + confirm-before-act loop | Aelin (gate design) | **built** → notes in dir |
+| [`receipts/`](receipts/) | Append-only hashed action log + verifier | Aelin | **built** → notes in dir |
+| [`demo/`](demo/) | Web UI (transcript · gate decision · receipt tape) + submission | — | to build |
+| [`docs/`](docs/) | Build plan, timeline, checklist | — | — |
+
+## Quickstart (the core, no API keys)
+
+```bash
+pip install -e ".[dev]"
+python run_demo.py          # full loop: intent → gate → confirm → receipt → verify
+pytest -q                   # 21 tests
+python -m sipa_voice_gate.verifier receipts.jsonl
+```
+
+```python
+from sipa_voice_gate.agent import VoiceGateAgent
+agent = VoiceGateAgent(log_path="receipts.jsonl")
+turn = agent.hear("Send $50 to Dana")   # -> turn.spoken is the consequence chain; agent.awaiting is True
+turn = agent.hear("yes")                 # -> turn.acted is True; a receipt is written
+```
 
 ## Build plan
 
