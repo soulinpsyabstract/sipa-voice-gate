@@ -36,12 +36,17 @@ DEFAULT_INVARIANTS: list[HardInvariant] = [
     HardInvariant(
         "value_ceiling",
         "the amount is over the ceiling this agent is trusted with",
-        lambda t, p: p.moves_value and p.magnitude > 1000.0,
+        lambda t, p: p.moves_value and p.magnitude >= 1000.0,
     ),
     HardInvariant(
         "irreversible_external_bulk",
         "an irreversible action hitting many external targets at once",
-        lambda t, p: (not p.reversible) and p.external_effect and p.target_count > 25,
+        lambda t, p: (not p.reversible) and p.external_effect and p.target_count >= 10,
+    ),
+    HardInvariant(
+        "mass_data_destruction",
+        "an irreversible action that destroys data across multiple targets",
+        lambda t, p: (not p.reversible) and p.destroys_data and p.target_count >= 2,
     ),
 ]
 
