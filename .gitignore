@@ -1,11 +1,2 @@
-__pycache__/
-*.pyc
-*.egg-info/
-.pytest_cache/
-build/
-dist/
-.venv/
-venv/
-receipts.jsonl
-receipts.log.jsonl
-*.receipts.jsonl
+.env
+.env
