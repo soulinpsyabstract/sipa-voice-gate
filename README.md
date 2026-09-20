@@ -35,7 +35,7 @@ Not a bigger model — a stricter loop around it.
 | Dir | Track | Owner | Status |
 | --- | --- | --- | --- |
 | [`sipa_voice_gate/`](sipa_voice_gate/) | The core package (tracks 2 + 3) | Aelin | **built, 21 tests** |
-| [`pipeline/`](pipeline/) | Voice pipeline — STT + PII redaction + TTS | — | to build |
+| [`pipeline/`](pipeline/) | Voice pipeline — STT + PII redaction + TTS | Gephel (STT/wiring) + Aelin (real PII redaction + real TTS) | **built** → notes in dir |
 | [`agent-core/`](agent-core/) | Intent + consequence-gate + confirm-before-act loop | Aelin (gate design) | **built** → notes in dir |
 | [`receipts/`](receipts/) | Append-only hashed action log + verifier | Aelin | **built** → notes in dir |
 | [`demo/`](demo/) | Web UI (transcript · gate decision · receipt tape) + submission | — | to build |

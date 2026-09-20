@@ -3,6 +3,8 @@
 # Tests:
 pytest>=7
 
-# Track 1 (voice pipeline) will add when it lands:
-#   assemblyai
-#   elevenlabs
+# Track 1 (voice pipeline):
+assemblyai
+elevenlabs
+pyaudio
+python-dotenv
