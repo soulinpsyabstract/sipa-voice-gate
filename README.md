@@ -38,7 +38,7 @@ Not a bigger model — a stricter loop around it.
 | [`pipeline/`](pipeline/) | Voice pipeline — STT + PII redaction + TTS | Gephel (STT/wiring) + Aelin (real PII redaction + real TTS) | **built** → notes in dir |
 | [`agent-core/`](agent-core/) | Intent + consequence-gate + confirm-before-act loop | Aelin (gate design) | **built** → notes in dir |
 | [`receipts/`](receipts/) | Append-only hashed action log + verifier | Aelin | **built** → notes in dir |
-| [`demo/`](demo/) | Web UI (transcript · gate decision · receipt tape) + submission | — | to build |
+| [`demo/`](demo/) | Web UI (transcript · gate decision · receipt tape) + submission | Aelin (UI code) | **built** → notes in dir; video + lablab.ai submission still needed |
 | [`docs/`](docs/) | Build plan, timeline, checklist | — | — |
 
 ## Quickstart (the core, no API keys)

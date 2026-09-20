@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>sipa-voice-gate demo</title>
+<style>
+  :root {
+    --bg: #0c0e10; --panel: #14171a; --panel2: #191d21;
+    --border: rgba(255, 122, 89, 0.16); --border-strong: rgba(255, 122, 89, 0.42);
+    --text: #e6e9ec; --dim: #8b95a0; --dimmer: #59616b;
+    --accent: #ff7a59; --allow: #4ade80; --confirm: #f0b537; --block: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace;
+    line-height: 1.5; padding: 1.5rem; padding-block: 2rem;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  .kicker { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; }
+  h1 { font-size: 1.5rem; margin: 0.3rem 0 0.3rem; text-wrap: balance; }
+  .sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 1.6rem; }
+  .row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+  input[type=text] {
+    flex: 1; min-width: 200px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.65rem 0.8rem; color: var(--text); font: inherit; font-size: 0.9rem;
+  }
+  input[type=text]:focus { outline: none; border-color: var(--border-strong); }
+  button {
+    background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 0.65rem 1rem; font: inherit; font-size: 0.85rem;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--border-strong); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #1a0e08; font-weight: 700; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .examples { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
+  .examples button { font-size: 0.76rem; padding: 0.4rem 0.7rem; color: var(--dim); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.1rem 1.2rem; margin-bottom: 1rem;
+  }
+  .card h2 {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim);
+    margin: 0 0 0.8rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+  }
+  .empty { color: var(--dimmer); font-size: 0.85rem; font-style: italic; }
+  .spoken { font-size: 0.95rem; margin-bottom: 0.7rem; }
+  .badge {
+    display: inline-block; font-size: 0.7rem; text-transform: uppercase; font-weight: 700;
+    letter-spacing: 0.05em; padding: 0.2rem 0.6rem; border-radius: 999px; margin-bottom: 0.6rem;
+  }
+  .badge.allow { background: color-mix(in srgb, var(--allow) 18%, transparent); color: var(--allow); }
+  .badge.confirm { background: color-mix(in srgb, var(--confirm) 18%, transparent); color: var(--confirm); }
+  .badge.block { background: color-mix(in srgb, var(--block) 18%, transparent); color: var(--block); }
+  ul.reasons, ul.chain { padding-left: 1.1rem; margin: 0.4rem 0; font-size: 0.85rem; color: var(--dim); }
+  ul.reasons li, ul.chain li { margin: 0.2rem 0; }
+  .awaiting { color: var(--confirm); font-size: 0.82rem; margin-top: 0.6rem; }
+  table.tape { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  table.tape th, table.tape td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); }
+  table.tape th { color: var(--dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  table.tape td.hash { color: var(--dimmer); font-size: 0.76rem; }
+  .verdict-tag { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; }
+  .verdict-tag.allow { color: var(--allow); }
+  .verdict-tag.confirm { color: var(--confirm); }
+  .verdict-tag.block { color: var(--block); }
+  .tape-wrap { max-height: 320px; overflow-y: auto; overflow-x: auto; }
+  #verify-result { font-size: 0.82rem; margin-top: 0.7rem; }
+  #verify-result.ok { color: var(--allow); }
+  #verify-result.fail { color: var(--block); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">AssemblyAI Voice Agent Hackathon &middot; team sipaos</p>
+  <h1>The voice agent that checks itself before it acts</h1>
+  <p class="sub">
+    Type an utterance below — it goes through the real consequence-gate and writes a real,
+    hash-chained receipt. (This transcript field stands in for the post-STT, post-PII-redaction
+    text that <code>pipeline_agent.py</code> produces from a real mic via AssemblyAI — run that
+    separately for the live voice path; this page shows the gate decision and receipt tape.)
+  </p>
+
+  <div class="row">
+    <input type="text" id="transcript-input" placeholder="e.g. Send $50 to Dana" autofocus />
+    <button class="primary" id="send-btn">Hear</button>
+  </div>
+  <div class="examples">
+    <button data-example="Send $50 to Dana">Send $50 to Dana</button>
+    <button data-example="Delete the backups folder">Delete the backups folder</button>
+    <button data-example="What's the weather like">What's the weather like</button>
+    <button data-example="yes">yes</button>
+    <button data-example="no">no</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Agent turn</h2>
+      <div id="turn-panel"><p class="empty">Nothing heard yet.</p></div>
+    </div>
+    <div class="card">
+      <h2>Chain integrity</h2>
+      <p style="color:var(--dim);font-size:0.82rem;margin:0">
+        Re-hashes every receipt from scratch and reports anything altered, reordered, or dropped —
+        checkable without trusting the agent that wrote it.
+      </p>
+      <button id="verify-btn" style="margin-top:0.8rem">Verify chain</button>
+      <div id="verify-result"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Receipt tape</h2>
+    <div class="tape-wrap">
+      <table class="tape" id="tape-table">
+        <thead><tr><th>#</th><th>kind</th><th>what</th><th>verdict</th><th>hash</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="empty" id="tape-empty">No receipts yet — say something above.</p>
+  </div>
+</div>
+
+<script>
+const input = document.getElementById('transcript-input');
+const sendBtn = document.getElementById('send-btn');
+const turnPanel = document.getElementById('turn-panel');
+const tapeBody = document.querySelector('#tape-table tbody');
+const tapeEmpty = document.getElementById('tape-empty');
+const verifyBtn = document.getElementById('verify-btn');
+const verifyResult = document.getElementById('verify-result');
+
+function badgeClass(verdict) {
+  if (verdict === 'allow') return 'allow';
+  if (verdict === 'confirm') return 'confirm';
+  if (verdict === 'block') return 'block';
+  return '';
+}
+
+async function hear(transcript) {
+  sendBtn.disabled = true;
+  try {
+    const resp = await fetch('/api/hear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      turnPanel.innerHTML = `<p class="empty">Error: ${data.error || resp.status}</p>`;
+      return;
+    }
+    renderTurn(data);
+    await refreshTape();
+  } catch (e) {
+    turnPanel.innerHTML = `<p class="empty">Network error: ${e.message}</p>`;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+function renderTurn(t) {
+  const cls = badgeClass(t.verdict);
+  let html = '';
+  if (t.verdict) {
+    html += `<span class="badge ${cls}">${t.verdict}</span>`;
+  }
+  html += `<div class="spoken">${escapeHtml(t.spoken)}</div>`;
+  if (t.reasons && t.reasons.length) {
+    html += '<ul class="reasons">' + t.reasons.map(r => `<li>${escapeHtml(r)}</li>`).join('') + '</ul>';
+  }
+  if (t.consequence_chain && t.consequence_chain.length) {
+    html += '<h3 style="font-size:0.78rem;color:var(--dim);margin:0.6rem 0 0.2rem">consequence chain</h3>';
+    html += '<ul class="chain">' + t.consequence_chain.map(c => `<li>${escapeHtml(c)}</li>`).join('') + '</ul>';
+  }
+  if (t.awaiting_confirmation) {
+    html += '<div class="awaiting">awaiting confirmation — say "yes" or "no" next</div>';
+  }
+  turnPanel.innerHTML = html;
+}
+
+async function refreshTape() {
+  const resp = await fetch('/api/tape');
+  const rows = await resp.json();
+  if (!rows.length) {
+    tapeBody.innerHTML = '';
+    tapeEmpty.style.display = '';
+    return;
+  }
+  tapeEmpty.style.display = 'none';
+  tapeBody.innerHTML = rows.slice().reverse().map(r => `
+    <tr>
+      <td>${r.seq}</td>
+      <td>${escapeHtml(r.kind)}</td>
+      <td>${escapeHtml(r.what)}</td>
+      <td><span class="verdict-tag ${badgeClass(r.verdict)}">${r.verdict || '—'}</span></td>
+      <td class="hash">${escapeHtml(r.hash)}</td>
+    </tr>
+  `).join('');
+}
+
+async function verifyChain() {
+  verifyBtn.disabled = true;
+  verifyResult.className = '';
+  verifyResult.textContent = 'checking…';
+  try {
+    const resp = await fetch('/api/verify');
+    const data = await resp.json();
+    if (data.ok) {
+      verifyResult.className = 'ok';
+      verifyResult.textContent = `OK — ${data.count} entries, chain intact, nothing altered.`;
+    } else {
+      verifyResult.className = 'fail';
+      verifyResult.textContent = `FAIL — ${data.problems.join('; ')}`;
+    }
+  } catch (e) {
+    verifyResult.className = 'fail';
+    verifyResult.textContent = `error: ${e.message}`;
+  } finally {
+    verifyBtn.disabled = false;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+sendBtn.addEventListener('click', () => {
+  const t = input.value.trim();
+  if (!t) return;
+  hear(t);
+  input.value = '';
+  input.focus();
+});
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendBtn.click();
+});
+document.querySelectorAll('.examples button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    input.value = btn.dataset.example;
+    sendBtn.click();
+  });
+});
+verifyBtn.addEventListener('click', verifyChain);
+
+refreshTape();
+</script>
+</body>
+</html>
