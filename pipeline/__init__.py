@@ -1,12 +1,11 @@
 import os
 from dotenv import load_dotenv
 import assemblyai as aai
-import pyaudio
 from elevenlabs.client import ElevenLabs
-from elevenlabs import play
+from elevenlabs.play import play
 
 load_dotenv()
-aai.settings.api_key = os.getenv("ASSEMBLYAI_KEY")
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY") or os.getenv("ASSEMBLYAI_KEY")
 
 _elevenlabs_client = None
 
@@ -48,6 +47,7 @@ _TRANSCRIPTION_CONFIG = aai.TranscriptionConfig(
 
 def record_audio(duration: int = 5, sample_rate: int = 16000) -> bytes:
     import wave, io
+    import pyaudio  # lazy: only needed for live mic capture, not for file-based/demo use
     CHUNK = 1024
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paFloat32, channels=1, rate=sample_rate, input=True, frames_per_buffer=CHUNK)
@@ -72,7 +72,7 @@ def transcribe_with_pii_redaction(audio_bytes: bytes) -> str:
     return result.text
 
 
-def speak(text: str, voice_id: str = "21m00Tcm4TlvDq8ikWAM") -> None:
+def speak(text: str, voice_id: str = "GR6tdHEf644joXkoKyGi") -> None:
     """Speaks `text` aloud via ElevenLabs. Falls back to printing if no
     ELEVENLABS_API_KEY is configured, so the pipeline still runs without it."""
     client = _get_elevenlabs_client()
